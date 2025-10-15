@@ -4,7 +4,7 @@ A responsive, professional portfolio website for James Kuria, a Project Manager 
 
 ## Project Overview
 
-This website features a modern Node.js/Express backend with Resend email integration for contact form handling, replacing the previous PHP implementation. The frontend is built using pure HTML, CSS, and JavaScript with a clean, minimalist design and interactive elements.
+This website features a modern Node.js/Express backend with Nodemailer (Gmail SMTP) email integration for contact form handling, replacing the previous PHP implementation. The frontend is built using pure HTML, CSS, and JavaScript with a clean, minimalist design and interactive elements.
 
 ## Features
 
@@ -16,7 +16,7 @@ This website features a modern Node.js/Express backend with Resend email integra
 - **Contact Form**: Fully functional contact form with email integration
 - **SEO Optimized**: Meta tags and structured data for better search visibility
 - **Security**: Rate limiting, input validation, and security headers
-- **Email Integration**: Resend API for reliable email delivery
+- **Email Integration**: Nodemailer (Gmail SMTP) for reliable email delivery
 
 ## Technology Stack
 
@@ -28,7 +28,7 @@ This website features a modern Node.js/Express backend with Resend email integra
 
 ### Backend
 - Node.js with Express.js
-- Resend API for email services
+- Nodemailer (Gmail SMTP) for email services
 - Express Rate Limit for spam protection
 - Helmet.js for security headers
 - Express Validator for input validation
@@ -119,14 +119,16 @@ Create a `.env` file in the `server/` directory with the following variables:
 
 ```env
 PORT=3000
-RESEND_API_KEY=your_resend_api_key_here
-RECIPIENT_EMAIL=your_email@example.com
+EMAIL_USER=your_gmail_address@gmail.com
+EMAIL_PASS=your_app_password
+RECIPIENT_EMAIL=recipient@example.com
 NODE_ENV=development
 CORS_ORIGIN=*
 ```
 
 **Required Variables:**
-- `RESEND_API_KEY`: Your Resend API key (get from [resend.com](https://resend.com))
+- `EMAIL_USER`: Gmail address used to send emails
+- `EMAIL_PASS`: Gmail App Password (not your normal password)
 - `RECIPIENT_EMAIL`: Email address where contact form submissions will be sent
 
 **Optional Variables:**

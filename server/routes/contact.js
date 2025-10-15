@@ -5,11 +5,19 @@
 
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 const router = express.Router();
 
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Nodemailer (Gmail SMTP)
+const mailTransporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
 
 // Validation middleware
 const validateContactForm = [
@@ -66,10 +74,10 @@ ${message}
 This message was sent from the contact form on James Kuria's portfolio website.
     `.trim();
 
-    // Send email using Resend
-    const emailData = await resend.emails.send({
-      from: 'Portfolio Contact Form <onboarding@resend.dev>', // Using Resend's default domain
-      to: [process.env.RECIPIENT_EMAIL],
+    // Send email using Nodemailer (Gmail)
+    const emailData = await mailTransporter.sendMail({
+      from: `Portfolio Contact Form <${process.env.EMAIL_USER}>`,
+      to: process.env.RECIPIENT_EMAIL,
       subject: `New Contact Form Submission from ${name}`,
       text: emailContent,
       replyTo: email,
@@ -81,7 +89,7 @@ This message was sent from the contact form on James Kuria's portfolio website.
 
     // Log successful email send (without sensitive data)
     console.log(`✅ Contact form submitted successfully from ${email} at ${timestamp}`);
-    console.log(`📧 Email ID: ${emailData.data?.id}`);
+    console.log(`📧 Message ID: ${emailData.messageId}`);
 
     // Send success response
     res.json({
@@ -93,11 +101,11 @@ This message was sent from the contact form on James Kuria's portfolio website.
   } catch (error) {
     console.error('❌ Error sending contact form email:', error);
     
-    // Handle specific Resend errors
-    if (error.name === 'ResendError') {
+    // Handle specific Nodemailer errors
+    if (error && error.response) {
       return res.status(500).json({
         success: false,
-        message: 'Sorry, there was an issue sending your message. Please try again later or contact me directly at tmarn2004@gmail.com'
+        message: 'Email service error. Please try again later or contact me directly at tmarn2004@gmail.com'
       });
     }
 

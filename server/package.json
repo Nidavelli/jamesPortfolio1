@@ -1,7 +1,7 @@
 {
   "name": "james-portfolio-backend",
   "version": "1.0.0",
-  "description": "Node.js/Express backend for James Kuria's portfolio website with Resend email integration",
+  "description": "Node.js/Express backend for James Kuria's portfolio website with Nodemailer email integration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -19,7 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
-    "resend": "^3.2.0",
+    "nodemailer": "^6.9.15",
     "cors": "^2.8.5",
     "helmet": "^7.1.0",
     "express-rate-limit": "^7.1.5",
