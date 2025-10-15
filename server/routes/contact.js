@@ -8,22 +8,41 @@ const { body, validationResult } = require('express-validator');
 const nodemailer = require('nodemailer');
 const router = express.Router();
 
+// Normalize and validate email-related environment variables
+const ENV = {
+  SMTP_HOST: (process.env.SMTP_HOST || '').trim(),
+  SMTP_PORT: (process.env.SMTP_PORT || '').trim(),
+  SMTP_SECURE: (process.env.SMTP_SECURE || '').trim(),
+  SMTP_USER: (process.env.SMTP_USER || '').trim(),
+  SMTP_PASSWORD: (process.env.SMTP_PASSWORD || '').trim(),
+  EMAIL_USER: (process.env.EMAIL_USER || '').trim(),
+  EMAIL_APP_PASSWORD: (process.env.EMAIL_APP_PASSWORD || '').trim(),
+  RECIPIENT_EMAIL: (process.env.RECIPIENT_EMAIL || '').trim()
+};
+
+if (!ENV.RECIPIENT_EMAIL) {
+  console.error('❌ RECIPIENT_EMAIL is not set. Emails cannot be delivered without a recipient.');
+}
+
+const usingSmtp = Boolean(ENV.SMTP_HOST);
+console.log(`📧 Email transport mode: ${usingSmtp ? 'SMTP' : 'Gmail service'}`);
+
 // Initialize Nodemailer using Gmail with App Password (or generic SMTP via env)
-const mailTransporter = process.env.SMTP_HOST
+const mailTransporter = usingSmtp
   ? nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: String(process.env.SMTP_SECURE).toLowerCase() === 'true',
+      host: ENV.SMTP_HOST,
+      port: Number(ENV.SMTP_PORT) || 587,
+      secure: String(ENV.SMTP_SECURE).toLowerCase() === 'true',
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD
+        user: ENV.SMTP_USER,
+        pass: ENV.SMTP_PASSWORD
       }
     })
   : nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_APP_PASSWORD
+        user: ENV.EMAIL_USER,
+        pass: ENV.EMAIL_APP_PASSWORD
       }
     });
 
@@ -94,7 +113,7 @@ This message was sent from the contact form on James Kuria's portfolio website.
 
     // Send email using Nodemailer
     const emailData = await mailTransporter.sendMail({
-      from: `Portfolio Contact Form <${process.env.EMAIL_USER}>`,
+      from: `Portfolio Contact Form <${ENV.EMAIL_USER}>`,
       to: process.env.RECIPIENT_EMAIL,
       subject: `New Contact Form Submission from ${name}`,
       text: emailContent,
