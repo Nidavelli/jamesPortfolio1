@@ -93,3 +93,4 @@ build/
 
 # Old PHP files (keeping for reference)
 contact-form-handler.php.bak
+.vercel
