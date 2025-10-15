@@ -8,14 +8,32 @@ const { body, validationResult } = require('express-validator');
 const nodemailer = require('nodemailer');
 const router = express.Router();
 
-// Initialize Nodemailer (Gmail SMTP)
-const mailTransporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+// Initialize Nodemailer using Gmail with App Password (or generic SMTP via env)
+const mailTransporter = process.env.SMTP_HOST
+  ? nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: String(process.env.SMTP_SECURE).toLowerCase() === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD
+      }
+    })
+  : nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_APP_PASSWORD
+      }
+    });
+
+// Verify transporter configuration on startup
+mailTransporter.verify(function (error) {
+  if (error) {
+    console.error('❌ Email transporter verification failed:', error);
+    console.error('Please check your email credentials in environment variables');
+  } else {
+    console.log('✅ Email server is ready to send messages');
   }
 });
 
@@ -74,7 +92,7 @@ ${message}
 This message was sent from the contact form on James Kuria's portfolio website.
     `.trim();
 
-    // Send email using Nodemailer (Gmail)
+    // Send email using Nodemailer
     const emailData = await mailTransporter.sendMail({
       from: `Portfolio Contact Form <${process.env.EMAIL_USER}>`,
       to: process.env.RECIPIENT_EMAIL,
@@ -100,19 +118,18 @@ This message was sent from the contact form on James Kuria's portfolio website.
 
   } catch (error) {
     console.error('❌ Error sending contact form email:', error);
-    
-    // Handle specific Nodemailer errors
-    if (error && error.response) {
-      return res.status(500).json({
-        success: false,
-        message: 'Email service error. Please try again later or contact me directly at tmarn2004@gmail.com'
-      });
+
+    let errorMessage = 'Failed to send message. Please try again later.';
+    if (error && error.code === 'EAUTH') {
+      console.error('Authentication failed - check EMAIL_USER and EMAIL_APP_PASSWORD or SMTP credentials');
+      errorMessage = 'Email service configuration error. Please contact the site administrator.';
+    } else if (error && error.code === 'ESOCKET') {
+      errorMessage = 'Network error. Please check your connection and try again.';
     }
 
-    // Generic error response
     res.status(500).json({
       success: false,
-      message: 'Sorry, something went wrong on our end. Please try again later or contact me directly at tmarn2004@gmail.com'
+      message: errorMessage
     });
   }
 });

@@ -17,6 +17,9 @@ const contactRoutes = require('./routes/contact');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy - required for platforms like Vercel/Cloudflare to get real client IPs
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
@@ -48,8 +51,9 @@ const limiter = rateLimit({
     success: false,
     message: 'Too many requests from this IP, please try again later.'
   },
-  standardHeaders: true,
-  legacyHeaders: false
+  standardHeaders: true, // Return rate limit info in the RateLimit-* headers
+  legacyHeaders: false, // Disable X-RateLimit-* headers
+  skip: (req) => process.env.NODE_ENV === 'development'
 });
 
 // Apply rate limiting to contact form
@@ -114,7 +118,7 @@ app.use((err, req, res, next) => {
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📧 Resend API configured: ${process.env.RESEND_API_KEY ? 'Yes' : 'No'}`);
+    console.log(`📧 Email configured: ${process.env.EMAIL_USER ? 'Yes' : 'No'}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`📁 Serving static files from: ${path.join(__dirname, '..')}`);
   });
